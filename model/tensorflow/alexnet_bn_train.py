@@ -111,7 +111,7 @@ opt_data_val = {
     'randomize': False
     }
 
-loader_train = DataLoaderDisk(**opt_data_train)
+loader_train = DataLoaderDisk(is_train=True, **opt_data_train)
 loader_val = DataLoaderDisk(**opt_data_val)
 #loader_train = DataLoaderH5(**opt_data_train)
 #loader_val = DataLoaderH5(**opt_data_val)

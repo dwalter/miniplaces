@@ -68,8 +68,9 @@ class DataLoaderH5(object):
 
 # Loading data from disk
 class DataLoaderDisk(object):
-    def __init__(self, **kwargs):
+    def __init__(self, is_train=False, **kwargs):
 
+        self.is_train = is_train
         self.load_size = int(kwargs['load_size'])
         self.fine_size = int(kwargs['fine_size'])
         self.data_mean = np.array(kwargs['data_mean'])
@@ -101,29 +102,30 @@ class DataLoaderDisk(object):
         labels_batch = np.zeros(batch_size)
         for i in range(batch_size):
             image = scipy.misc.imread(self.list_im[self._idx])
-            ##################################################################
-            ### Add data augmentation below ###
-            ##################################################################
-            
-            ### random rotation between 0 and 45 degrees
-            rotate_angle = 90.0 * np.random.random() - 45.0
-            image = scipy.misc.imrotate(image, rotate_angle)
+            if self.is_train:
+                ##################################################################
+                ### Add data augmentation below ###
+                ##################################################################
+                
+                ### random rotation between 0 and 45 degrees
+                rotate_angle = 90.0 * np.random.random() - 45.0
+                image = scipy.misc.imrotate(image, rotate_angle)
 
-            ### random zooming between 75% and 150%
-            #zoom_factor = 0.75 * np.random.random() + 0.75
-            #zoom(image, zoom_factor, output=image)
+                ### random zooming between 75% and 150%
+                #zoom_factor = 0.75 * np.random.random() + 0.75
+                #zoom(image, zoom_factor, output=image)
 
-            ### random shifting
-            n_shift = 50.0 * np.random.random()
-            shift(image, n_shift, output=image)
+                ### random shifting
+                n_shift = 50.0 * np.random.random()
+                shift(image, n_shift, output=image)
 
-            ### random pixel value scaling
-            #val_scale = 0.2 * np.random.random() + 0.8
-            #image = image * val_scale
+                ### random pixel value scaling
+                #val_scale = 0.2 * np.random.random() + 0.8
+                #image = image * val_scale
 
-            ##################################################################
-            ###  End of data augmentation  ###
-            ##################################################################
+                ##################################################################
+                ###  End of data augmentation  ###
+                ##################################################################
             image = scipy.misc.imresize(image, (self.load_size, self.load_size))
             image = image.astype(np.float32)/255.
             image = image - self.data_mean
