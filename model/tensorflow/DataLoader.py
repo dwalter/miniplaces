@@ -1,7 +1,9 @@
 import os
 import numpy as np
 import scipy.misc
+from scipy.ndimage.interpolation import zoom, shift
 import h5py
+import random.random
 np.random.seed(123)
 
 # loading data from .h5
@@ -100,6 +102,29 @@ class DataLoaderDisk(object):
         labels_batch = np.zeros(batch_size)
         for i in range(batch_size):
             image = scipy.misc.imread(self.list_im[self._idx])
+            ##################################################################
+            ### Add data augmentation below ###
+            ##################################################################
+            
+            ### random rotation between 0 and 45 degrees
+            rotate_angle = random(-45.0, 45.0)
+            image = scipy.misc.imrotate(image, rotate angle)
+
+            ### random zooming between 75% and 150%
+            zoom_factor = random(0.75, 1.5)
+            image = zoom(image, zoom_factor)
+
+            ### random shifting
+            n_shift = random(0.0, 50)
+            image = shift(image, n_shift)
+
+            ### random pixel value scaling
+            val_scale = random(0.8, 1.0)
+            image = image * val_scale
+
+            ##################################################################
+            ###  End of data augmentation  ###
+            ##################################################################
             image = scipy.misc.imresize(image, (self.load_size, self.load_size))
             image = image.astype(np.float32)/255.
             image = image - self.data_mean
