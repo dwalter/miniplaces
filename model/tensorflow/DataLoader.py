@@ -3,7 +3,6 @@ import numpy as np
 import scipy.misc
 from scipy.ndimage.interpolation import zoom, shift
 import h5py
-import random.random
 np.random.seed(123)
 
 # loading data from .h5
@@ -107,20 +106,20 @@ class DataLoaderDisk(object):
             ##################################################################
             
             ### random rotation between 0 and 45 degrees
-            rotate_angle = random(-45.0, 45.0)
-            image = scipy.misc.imrotate(image, rotate angle)
+            rotate_angle = 90.0 * np.random.random() - 45.0
+            image = scipy.misc.imrotate(image, rotate_angle)
 
             ### random zooming between 75% and 150%
-            zoom_factor = random(0.75, 1.5)
-            image = zoom(image, zoom_factor)
+            #zoom_factor = 0.75 * np.random.random() + 0.75
+            #zoom(image, zoom_factor, output=image)
 
             ### random shifting
-            n_shift = random(0.0, 50)
-            image = shift(image, n_shift)
+            n_shift = 50.0 * np.random.random()
+            shift(image, n_shift, output=image)
 
             ### random pixel value scaling
-            val_scale = random(0.8, 1.0)
-            image = image * val_scale
+            #val_scale = 0.2 * np.random.random() + 0.8
+            #image = image * val_scale
 
             ##################################################################
             ###  End of data augmentation  ###

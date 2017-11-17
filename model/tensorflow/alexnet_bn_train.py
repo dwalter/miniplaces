@@ -5,7 +5,7 @@ from tensorflow.contrib.layers.python.layers import batch_norm
 from DataLoader import *
 
 # Dataset Parameters
-batch_size = 64
+batch_size = 128
 load_size = 256
 fine_size = 224
 c = 3
@@ -17,8 +17,8 @@ dropout = 0.5 # Dropout, probability to keep units
 training_iters = 10000
 step_display = 50
 step_save = 1000
-path_save = 'alexnet_bn_v1'
-start_from = 'alexnet_bn_v1-6000'
+path_save = 'alexnet_bn_v2'
+start_from = 'alexnet_bn_v1-3000'
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
