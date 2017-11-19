@@ -102,13 +102,13 @@ class DataLoaderDisk(object):
         labels_batch = np.zeros(batch_size)
         for i in range(batch_size):
             image = scipy.misc.imread(self.list_im[self._idx])
-            if self.is_train:
+            if False: #self.is_train:
                 ##################################################################
                 ### Add data augmentation below ###
                 ##################################################################
                 
                 ### random rotation between 0 and 45 degrees
-                rotate_angle = 90.0 * np.random.random() - 45.0
+                rotate_angle = 45.0 * np.random.random() - 22.5
                 image = scipy.misc.imrotate(image, rotate_angle)
 
                 ### random zooming between 75% and 150%
