@@ -12,13 +12,13 @@ c = 3
 data_mean = np.asarray([0.45834960097,0.44674252445,0.41352266842])
 
 # Training Parameters
-learning_rate = 0.00001
+learning_rate = 0.000001
 dropout = 0.5 # Dropout, probability to keep units
-training_iters = 15000
+training_iters = 6001
 step_display = 50
-step_save = 5000
-path_save = 'model_alexnet_bn_no_data_aug_v1'
-start_from = ''
+step_save = 6000
+path_save = 'model_alexnet_bn_no_data_aug_lr000001_v3'
+start_from = 'model_alexnet_bn_no_data_aug_v2-6000'
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
