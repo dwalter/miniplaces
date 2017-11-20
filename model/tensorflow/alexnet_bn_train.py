@@ -12,13 +12,20 @@ c = 3
 data_mean = np.asarray([0.45834960097,0.44674252445,0.41352266842])
 
 # Training Parameters
-learning_rate = 0.000001
-dropout = 0.5 # Dropout, probability to keep units
-training_iters = 6001
-step_display = 50
-step_save = 6000
-path_save = 'model_alexnet_bn_no_data_aug_lr000001_v3'
-start_from = 'model_alexnet_bn_no_data_aug_v2-6000'
+#learning_rate = 0.000001
+#dropout = 0.5 # Dropout, probability to keep units
+#training_iters = 6001
+#step_display = 50
+#step_save = 6000
+#path_save = 'model_alexnet_bn_no_data_aug_lr000001_v3'
+#start_from = 'model_alexnet_bn_no_data_aug_v2-6000'
+
+##################################
+
+### moved training params to the __main__ func
+
+##################################
+>>>>>>> 029bd83427cb8d44202ddf5476cd36dd6da6f143
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
@@ -91,117 +98,201 @@ def alexnet(x, keep_dropout, train_phase):
     
     return out
 
-# Construct dataloader
-opt_data_train = {
-    #'data_h5': 'miniplaces_256_train.h5',
-    'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
-    'data_list': '../../data/train.txt', # MODIFY PATH ACCORDINGLY
-    'load_size': load_size,
-    'fine_size': fine_size,
-    'data_mean': data_mean,
-    'randomize': True
-    }
-opt_data_val = {
-    #'data_h5': 'miniplaces_256_val.h5',
-    'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
-    'data_list': '../../data/val.txt',   # MODIFY PATH ACCORDINGLY
-    'load_size': load_size,
-    'fine_size': fine_size,
-    'data_mean': data_mean,
-    'randomize': False
-    }
 
-loader_train = DataLoaderDisk(is_train=True, **opt_data_train)
-loader_val = DataLoaderDisk(**opt_data_val)
-#loader_train = DataLoaderH5(**opt_data_train)
-#loader_val = DataLoaderH5(**opt_data_val)
 
-# tf Graph input
-x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
-y = tf.placeholder(tf.int64, None)
-keep_dropout = tf.placeholder(tf.float32)
-train_phase = tf.placeholder(tf.bool)
+def main():
 
-# Construct model
-logits = alexnet(x, keep_dropout, train_phase)
+    # Construct dataloader
+    opt_data_train = {
+        #'data_h5': 'miniplaces_256_train.h5',
+        'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
+        'data_list': '../../data/train.txt', # MODIFY PATH ACCORDINGLY
+        'load_size': load_size,
+        'fine_size': fine_size,
+        'data_mean': data_mean,
+        'randomize': True
+        }
+    opt_data_val = {
+        #'data_h5': 'miniplaces_256_val.h5',
+        'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
+        'data_list': '../../data/val.txt',   # MODIFY PATH ACCORDINGLY
+        'load_size': load_size,
+        'fine_size': fine_size,
+        'data_mean': data_mean,
+        'randomize': False
+        }
 
-# Define loss and optimizer
-loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
-train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    loader_train = DataLoaderDisk(is_train=True, **opt_data_train)
+    loader_val = DataLoaderDisk(**opt_data_val)
+    #loader_train = DataLoaderH5(**opt_data_train)
+    #loader_val = DataLoaderH5(**opt_data_val)
 
-# Evaluate model
-accuracy1 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 1), tf.float32))
-accuracy5 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 5), tf.float32))
+    # tf Graph input
+    x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
+    y = tf.placeholder(tf.int64, None)
+    keep_dropout = tf.placeholder(tf.float32)
+    train_phase = tf.placeholder(tf.bool)
 
-# define initialization
-init = tf.global_variables_initializer()
+    # Construct model
+    logits = alexnet(x, keep_dropout, train_phase)
 
-# define saver
-saver = tf.train.Saver()
+    # Define loss and optimizer
+    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
+    train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-# define summary writer
-#writer = tf.train.SummaryWriter('.', graph=tf.get_default_graph())
+    # Evaluate model
+    accuracy1 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 1), tf.float32))
+    accuracy5 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 5), tf.float32))
 
-# Launch the graph
-with tf.Session() as sess:
-    # Initialization
-    if len(start_from)>1:
+    # define initialization
+    init = tf.global_variables_initializer()
+
+    # define saver
+    saver = tf.train.Saver()
+
+    # define summary writer
+    #writer = tf.train.SummaryWriter('.', graph=tf.get_default_graph())
+
+    # Launch the graph
+    with tf.Session() as sess:
+        # Initialization
+        if len(start_from)>1:
+            saver.restore(sess, start_from)
+        else:
+            sess.run(init)
+        
+        step = 0
+
+        while step < training_iters:
+            # Load a batch of training data
+            images_batch, labels_batch = loader_train.next_batch(batch_size)
+            
+            if step % step_display == 0:
+                print('[%s]:' %(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+                # Calculate batch loss and accuracy on training set
+                l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False}) 
+                print("-Iter " + str(step) + ", Training Loss= " + \
+                      "{:.6f}".format(l) + ", Accuracy Top1 = " + \
+                      "{:.4f}".format(acc1) + ", Top5 = " + \
+                      "{:.4f}".format(acc5))
+
+                # Calculate batch loss and accuracy on validation set
+                images_batch_val, labels_batch_val = loader_val.next_batch(batch_size)    
+                l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch_val, y: labels_batch_val, keep_dropout: 1., train_phase: False}) 
+                print("-Iter " + str(step) + ", Validation Loss= " + \
+                      "{:.6f}".format(l) + ", Accuracy Top1 = " + \
+                      "{:.4f}".format(acc1) + ", Top5 = " + \
+                      "{:.4f}".format(acc5))
+            
+            # Run optimization op (backprop)
+            sess.run(train_optimizer, feed_dict={x: images_batch, y: labels_batch, keep_dropout: dropout, train_phase: True})
+            
+            step += 1
+            
+            # Save model
+            if step % step_save == 0:
+                saver.save(sess, path_save, global_step=step)
+                print("Model saved at Iter %d !" %(step))
+            
+        print("Optimization Finished!")
+
+
+        # Evaluate on the whole validation set
+        print('Evaluation on the whole validation set...')
+        num_batch = loader_val.size()//batch_size
+        acc1_total = 0.
+        acc5_total = 0.
+        loader_val.reset()
+        for i in range(num_batch):
+            images_batch, labels_batch = loader_val.next_batch(batch_size)    
+            acc1, acc5 = sess.run([accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False})
+            acc1_total += acc1
+            acc5_total += acc5
+            print("Validation Accuracy Top1 = " + \
+                  "{:.4f}".format(acc1) + ", Top5 = " + \
+                  "{:.4f}".format(acc5))
+
+        acc1_total /= num_batch
+        acc5_total /= num_batch
+        print('Evaluation Finished! Accuracy Top1 = ' + "{:.4f}".format(acc1_total) + ", Top5 = " + "{:.4f}".format(acc5_total))
+
+
+def main_test():
+
+    # Construct dataloader
+    opt_data_test = {
+        #'data_h5': 'miniplaces_256_train.h5',
+        'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
+        'data_list': '../../data/test.txt', # MODIFY PATH ACCORDINGLY
+        'load_size': load_size,
+        'fine_size': fine_size,
+        'data_mean': data_mean,
+        'randomize': False
+        }
+
+    loader_test = DataLoaderDiskTest(is_train=True, **opt_data_train)
+
+    # tf Graph input
+    x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
+    keep_dropout = tf.placeholder(tf.float32)
+    train_phase = tf.placeholder(tf.bool)
+    # Construct model
+    logits = alexnet(x, keep_dropout, train_phase)
+    top5_preds = tf.nn.top_k(logits, 5)
+    # define initialization
+    init = tf.global_variables_initializer()
+    # define saver
+    saver = tf.train.Saver()
+    # Launch the graph
+    out_preds = []
+    with tf.Session() as sess:
+        # Initialization
         saver.restore(sess, start_from)
-    else:
-        sess.run(init)
+        # Evaluate on the whole validation set
+        loader_val.reset()
+        for i in range(num_batch):
+            images_batch = loader_test.next_batch(batch_size)    
+            top5s = sess.run([top5_preds], feed_dict={x: images_batch, keep_dropout: 1., train_phase: False})
+            out_preds += top5s
     
-    step = 0
+    for i in range(1000):
+    num_str = str(i+1)
+    while len(num_str) < 8:
+        num_str = '0' + num_str
+    preds_str = ' '.join([str(elem) for elem in out_preds[i]])
+    print 'test/' + num_str + '.jpg ' + preds_str
 
-    while step < training_iters:
-        # Load a batch of training data
-        images_batch, labels_batch = loader_train.next_batch(batch_size)
-        
-        if step % step_display == 0:
-            print('[%s]:' %(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+if __name__ == '__main__':
+    
+    is_test = False
+    if not is_test:
+        learning_rate = 0.000001
+        dropout = 0.5 # Dropout, probability to keep units
+        training_iters = 15000
+        step_display = 50
+        step_save = 5000
+        path_save = 'model_alexnet_bn_no_data_aug_v1'
+        start_from = ''
 
-            # Calculate batch loss and accuracy on training set
-            l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False}) 
-            print("-Iter " + str(step) + ", Training Loss= " + \
-                  "{:.6f}".format(l) + ", Accuracy Top1 = " + \
-                  "{:.4f}".format(acc1) + ", Top5 = " + \
-                  "{:.4f}".format(acc5))
+        main()
 
-            # Calculate batch loss and accuracy on validation set
-            images_batch_val, labels_batch_val = loader_val.next_batch(batch_size)    
-            l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch_val, y: labels_batch_val, keep_dropout: 1., train_phase: False}) 
-            print("-Iter " + str(step) + ", Validation Loss= " + \
-                  "{:.6f}".format(l) + ", Accuracy Top1 = " + \
-                  "{:.4f}".format(acc1) + ", Top5 = " + \
-                  "{:.4f}".format(acc5))
-        
-        # Run optimization op (backprop)
-        sess.run(train_optimizer, feed_dict={x: images_batch, y: labels_batch, keep_dropout: dropout, train_phase: True})
-        
-        step += 1
-        
-        # Save model
-        if step % step_save == 0:
-            saver.save(sess, path_save, global_step=step)
-            print("Model saved at Iter %d !" %(step))
-        
-    print("Optimization Finished!")
+    if is_test:
+        learning_rate = 0.000001
+        dropout = 1.0 # Dropout, probability to keep units
+        training_iters = 15000
+        step_display = 50
+        step_save = 5000
+        path_save = 'model_alexnet_bn_no_data_aug_v1'
+        start_from = ''
+
+        main_test()
 
 
-    # Evaluate on the whole validation set
-    print('Evaluation on the whole validation set...')
-    num_batch = loader_val.size()//batch_size
-    acc1_total = 0.
-    acc5_total = 0.
-    loader_val.reset()
-    for i in range(num_batch):
-        images_batch, labels_batch = loader_val.next_batch(batch_size)    
-        acc1, acc5 = sess.run([accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False})
-        acc1_total += acc1
-        acc5_total += acc5
-        print("Validation Accuracy Top1 = " + \
-              "{:.4f}".format(acc1) + ", Top5 = " + \
-              "{:.4f}".format(acc5))
 
-    acc1_total /= num_batch
-    acc5_total /= num_batch
-    print('Evaluation Finished! Accuracy Top1 = ' + "{:.4f}".format(acc1_total) + ", Top5 = " + "{:.4f}".format(acc5_total))
+
+
+
+
+
+
