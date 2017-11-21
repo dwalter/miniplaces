@@ -5,7 +5,6 @@ from tensorflow.contrib.layers.python.layers import batch_norm
 from DataLoader import *
 
 # Dataset Parameters
-batch_size = 128
 load_size = 256
 fine_size = 224
 c = 3
@@ -25,7 +24,6 @@ data_mean = np.asarray([0.45834960097,0.44674252445,0.41352266842])
 ### moved training params to the __main__ func
 
 ##################################
->>>>>>> 029bd83427cb8d44202ddf5476cd36dd6da6f143
 
 def batch_norm_layer(x, train_phase, scope_bn):
     return batch_norm(x, decay=0.9, center=True, scale=True,
@@ -231,7 +229,7 @@ def main_test():
         'randomize': False
         }
 
-    loader_test = DataLoaderDiskTest(is_train=True, **opt_data_train)
+    loader_test = DataLoaderDiskTest(is_train=True, **opt_data_test)
 
     # tf Graph input
     x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
@@ -239,52 +237,54 @@ def main_test():
     train_phase = tf.placeholder(tf.bool)
     # Construct model
     logits = alexnet(x, keep_dropout, train_phase)
-    top5_preds = tf.nn.top_k(logits, 5)
+    _, top5_preds = tf.nn.top_k(logits, 5)
     # define initialization
     init = tf.global_variables_initializer()
     # define saver
     saver = tf.train.Saver()
     # Launch the graph
     out_preds = []
+    num_batch = loader_test.size()//batch_size
     with tf.Session() as sess:
         # Initialization
         saver.restore(sess, start_from)
         # Evaluate on the whole validation set
-        loader_val.reset()
+        loader_test.reset()
         for i in range(num_batch):
             images_batch = loader_test.next_batch(batch_size)    
-            top5s = sess.run([top5_preds], feed_dict={x: images_batch, keep_dropout: 1., train_phase: False})
-            out_preds += top5s
-    
-    for i in range(1000):
-    num_str = str(i+1)
-    while len(num_str) < 8:
-        num_str = '0' + num_str
-    preds_str = ' '.join([str(elem) for elem in out_preds[i]])
-    print 'test/' + num_str + '.jpg ' + preds_str
+            top5s = sess.run([top5_preds], feed_dict={x: images_batch, keep_dropout: 1., train_phase: False})[0]
+            out_preds += top5s.tolist()
+
+    for i in range(10000):
+        num_str = str(i+1)
+        while len(num_str) < 8: num_str = '0' + num_str
+        preds_str = ' '.join([str(elem) for elem in out_preds[i]])
+        print 'test/' + num_str + '.jpg ' + preds_str
 
 if __name__ == '__main__':
     
-    is_test = False
+    is_test = True
     if not is_test:
+        batch_size = 128
         learning_rate = 0.000001
         dropout = 0.5 # Dropout, probability to keep units
-        training_iters = 15000
+        training_iters = 6001
         step_display = 50
-        step_save = 5000
-        path_save = 'model_alexnet_bn_no_data_aug_v1'
-        start_from = ''
+        step_save = 6000
+        path_save = 'model_alexnet_bn_no_data_aug_v3'
+        start_from = 'model_alexnet_bn_no_data_aug_v2-6000'
 
         main()
 
     if is_test:
+        batch_size = 100
         learning_rate = 0.000001
         dropout = 1.0 # Dropout, probability to keep units
         training_iters = 15000
         step_display = 50
         step_save = 5000
-        path_save = 'model_alexnet_bn_no_data_aug_v1'
-        start_from = ''
+        path_save = 'model_testing'
+        start_from = 'model_alexnet_bn_no_data_aug_v3-6000'
 
         main_test()
 

@@ -1,0 +1,14 @@
+('# Images found:', 100000)
+('# Images found:', 10000)
+[2017-11-20 01:43:15]:
+-Iter 0, Training Loss= 3.061884, Accuracy Top1 = 0.2500, Top5 = 0.5234
+-Iter 0, Validation Loss= 3.220685, Accuracy Top1 = 0.2188, Top5 = 0.5000
+[2017-11-20 01:44:44]:
+-Iter 50, Training Loss= 3.016872, Accuracy Top1 = 0.2891, Top5 = 0.5078
+-Iter 50, Validation Loss= 3.260829, Accuracy Top1 = 0.2266, Top5 = 0.5156
+[2017-11-20 01:45:53]:
+-Iter 100, Training Loss= 3.079613, Accuracy Top1 = 0.2266, Top5 = 0.5391
+-Iter 100, Validation Loss= 3.191241, Accuracy Top1 = 0.2109, Top5 = 0.4688
+[2017-11-20 01:47:02]:
+-Iter 150, Training Loss= 2.907825, Accuracy Top1 = 0.2812, Top5 = 0.5703
+-Iter 150, Validation Loss= 3.202775, Accuracy Top1 = 0.2578, Top5 = 0.5469
