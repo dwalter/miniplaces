@@ -437,7 +437,7 @@ def main():
     train_phase = tf.placeholder(tf.bool)
 
     # Construct model
-    model= imagenet_resnet_v2(18, 100, data_format=None)
+    model= imagenet_resnet_v2(RESNET_SIZE, 100, data_format=None)
     logits= model(x,True)
 
     # Define loss and optimizer
@@ -535,14 +535,14 @@ def main_test():
         'randomize': False
         }
 
-    loader_test = DataLoaderDiskTest(is_train=True, **opt_data_test)
+    loader_test = DataLoaderDiskTest(is_train=False, **opt_data_test)
 
     # tf Graph input
     x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
     keep_dropout = tf.placeholder(tf.float32)
     train_phase = tf.placeholder(tf.bool)
     # Construct model
-    model= imagenet_resnet_v2(18, 100, data_format=None)
+    model= imagenet_resnet_v2(RESNET_SIZE, 100, data_format=None)
     logits= model(x,True)
     _, top5_preds = tf.nn.top_k(logits, 5)
     # define initialization
@@ -566,25 +566,25 @@ def main_test():
         num_str = str(i+1)
         while len(num_str) < 8: num_str = '0' + num_str
         preds_str = ' '.join([str(elem) for elem in out_preds[i]])
-        print 'test/' + num_str + '.jpg ' + preds_str
+        print('test/' + num_str + '.jpg ' + preds_str)
 
 if __name__ == '__main__':
-    
-    is_test = True
+    RESNET_SIZE = 34 # 18
+    is_test = False
     if not is_test:
-        batch_size = 100
-        learning_rate = 0.00001
+        batch_size = 64
+        learning_rate = 0.0001
         dropout = 0.5 # Dropout, probability to keep units
-        training_iters = 2001
+        training_iters = 1001
         step_display = 50
-        step_save = 2000
-        path_save = 'model_res_lr00001_v1'
-        start_from = 'model_resnet-decrease-lr-4000'
+        step_save = 1000
+        path_save = 'model_res_lr00001_SIZE34_v1'
+        start_from = ''
 
         main()
 
     if is_test:
-        batch_size = 100
+        batch_size = 64
         learning_rate = 0.00001
         dropout = 1.0 # Dropout, probability to keep units
         training_iters = 15000
