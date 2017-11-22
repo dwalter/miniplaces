@@ -413,7 +413,7 @@ def main():
         'load_size': load_size,
         'fine_size': fine_size,
         'data_mean': data_mean,
-        'randomize': True
+        'randomize': False
         }
     opt_data_val = {
         #'data_h5': 'miniplaces_256_val.h5',
@@ -422,7 +422,7 @@ def main():
         'load_size': load_size,
         'fine_size': fine_size,
         'data_mean': data_mean,
-        'randomize': False
+        'randomize': True
         }
 
     loader_train = DataLoaderDisk(is_train=True, **opt_data_train)
@@ -569,29 +569,29 @@ def main_test():
         print('test/' + num_str + '.jpg ' + preds_str)
 
 if __name__ == '__main__':
-    RESNET_SIZE = 34 # 18
+    RESNET_SIZE = 18 # 34
     is_test = False
     if not is_test:
         batch_size = 64
-        learning_rate = 0.0001
-        dropout = 0.5 # Dropout, probability to keep units
-        training_iters = 1001
+        learning_rate = 0.00001
+        dropout = 0.50 # Dropout, probability to keep units
+        training_iters = 1501
         step_display = 50
-        step_save = 1000
-        path_save = 'model_res_lr00001_SIZE34_v1'
-        start_from = ''
+        step_save = 1500
+        path_save = 'model_resnet-decrease-lr-more-iterations-data_aug_v4_final'
+        start_from ='model_resnet-increased-dropout-3000'
 
         main()
 
     if is_test:
-        batch_size = 64
+        batch_size = 100
         learning_rate = 0.00001
         dropout = 1.0 # Dropout, probability to keep units
         training_iters = 15000
         step_display = 50
         step_save = 5000
         path_save = 'model_testing'
-        start_from = 'model_resnet-decrease-lr-4000'
+        start_from = 'model_resnet-decrease-lr-more-iterations-data_aug_v3-1500'
 
         main_test()
 

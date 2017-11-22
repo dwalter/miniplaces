@@ -103,7 +103,7 @@ class DataLoaderDisk(object):
         labels_batch = np.zeros(batch_size)
         for i in range(batch_size):
             image = scipy.misc.imread(self.list_im[self._idx])
-            if self.is_train:
+            if False:# self.is_train:
                 ##################################################################
                 ### Add data augmentation below ###
                 ##################################################################
@@ -117,8 +117,8 @@ class DataLoaderDisk(object):
                 #zoom(image, zoom_factor, output=image)
 
                 ### random shifting
-                n_shift = 10.0 * np.random.random()
-                shift(image, n_shift, output=image)
+                #n_shift = 10.0 * np.random.random()
+                #shift(image, n_shift, output=image)
 
                 ### random pixel value scaling
                 #val_scale = 0.2 * np.random.random() + 0.8
