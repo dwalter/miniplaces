@@ -436,27 +436,29 @@ def main():
             # Load a batch of training data
             images_batch, labels_batch = loader_train.next_batch(batch_size)
             
-            if step % step_display == 0:
-                print('[%s]:' %(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            # if step % step_display == 0:
+            #     print('[%s]:' %(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
-                # Calculate batch loss and accuracy on training set
-                #l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False}) 
-                out1 = sess.run([output], feed_dict={x:images_batch, y:labels_batch, keep_dropout: 1., train_phase:False}
-                print("-Iter " + str(step) + ", Training Loss= " + \
-                      "{:.6f}".format(l) + ", Accuracy Top1 = " + \
-                      "{:.4f}".format(acc1) + ", Top5 = " + \
-                      "{:.4f}".format(acc5))
+            #     # Calculate batch loss and accuracy on training set
+            #     #l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False}) 
+            #     out1 = sess.run([output], feed_dict={x:images_batch, y:labels_batch, keep_dropout: 1., train_phase:False}
+            #     print("-Iter " + str(step) + ", Training Loss= " + \
+            #           "{:.6f}".format(l) + ", Accuracy Top1 = " + \
+            #           "{:.4f}".format(acc1) + ", Top5 = " + \
+            #           "{:.4f}".format(acc5))
 
-                # Calculate batch loss and accuracy on validation set
-                images_batch_val, labels_batch_val = loader_val.next_batch(batch_size)    
-                l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch_val, y: labels_batch_val, keep_dropout: 1., train_phase: False}) 
-                print("-Iter " + str(step) + ", Validation Loss= " + \
-                      "{:.6f}".format(l) + ", Accuracy Top1 = " + \
-                      "{:.4f}".format(acc1) + ", Top5 = " + \
-                      "{:.4f}".format(acc5))
+            #     # Calculate batch loss and accuracy on validation set
+            #     images_batch_val, labels_batch_val = loader_val.next_batch(batch_size)    
+            #     l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch_val, y: labels_batch_val, keep_dropout: 1., train_phase: False}) 
+            #     print("-Iter " + str(step) + ", Validation Loss= " + \
+            #           "{:.6f}".format(l) + ", Accuracy Top1 = " + \
+            #           "{:.4f}".format(acc1) + ", Top5 = " + \
+            #           "{:.4f}".format(acc5))
             
             # Run optimization op (backprop)
-            sess.run(train_optimizer, feed_dict={x: images_batch, y: labels_batch, keep_dropout: dropout, train_phase: True})
+            out1 = sess.run(output, feed_dict={x: images_batch, y: labels_batch, keep_dropout: dropout, train_phase: True})
+            print(out1.shape)
+            assert False
             
             step += 1
             
