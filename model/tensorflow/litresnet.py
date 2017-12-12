@@ -236,71 +236,25 @@ def block_layer(inputs, filters, block_fn, blocks, strides, is_training, name,
   for _ in range(1, blocks):
     inputs = block_fn(inputs, filters, is_training, None, 1, data_format)
 
-  return tf.identity(inputs, name)
+  return tf.identity(inputs, –)
 
 
-def cifar10_resnet_v2_generator(resnet_size, num_classes, data_format=None):
-  """Generator for CIFAR-10 ResNet v2 models.
+def upsample_layer(input_img, factor):
+  number_of_classes = input_img.shape[2]
+  new_height = input_img.shape[0] * factor
+  new_width = input_img.shape[1] * factor
 
-  Args:
-    resnet_size: A single integer for the size of the ResNet model.
-    num_classes: The number of possible classes for image classification.
-    data_format: The input format ('channels_last', 'channels_first', or None).
-      If set to None, the format is dependent on whether a GPU is available.
+  expanded_img = tf.expand_dims(input_img, axis=0)
 
-  Returns:
-    The model function that takes in `inputs` and `is_training` and
-    returns the output tensor of the ResNet model.
+  upsample_filt_pl = tf.placeholder(tf.float32)
+  logits_pl = tf.placeholder(tf.float32)
+  upsample_filter_np = bilinear_upsample_weights(factor,
+                                        number_of_classes)
 
-  Raises:
-    ValueError: If `resnet_size` is invalid.
-  """
-  if resnet_size % 6 != 2:
-    raise ValueError('resnet_size must be 6n + 2:', resnet_size)
-
-  num_blocks = (resnet_size - 2) // 6
-
-  if data_format is None:
-    data_format = (
-        'channels_first' if tf.test.is_built_with_cuda() else 'channels_last')
-
-  def model(inputs, is_training):
-    """Constructs the ResNet model given the inputs."""
-    if data_format == 'channels_first':
-      # Convert the inputs from channels_last (NHWC) to channels_first (NCHW).
-      # This provides a large performance boost on GPU. See
-      # https://www.tensorflow.org/performance/performance_guide#data_formats
-      inputs = tf.transpose(inputs, [0, 3, 1, 2])
-
-    inputs = conv2d_fixed_padding(
-        inputs=inputs, filters=16, kernel_size=3, strides=1,
-        data_format=data_format)
-    inputs = tf.identity(inputs, 'initial_conv')
-
-    inputs = block_layer(
-        inputs=inputs, filters=16, block_fn=building_block, blocks=num_blocks,
-        strides=1, is_training=is_training, name='block_layer1',
-        data_format=data_format)
-    inputs = block_layer(
-        inputs=inputs, filters=32, block_fn=building_block, blocks=num_blocks,
-        strides=2, is_training=is_training, name='block_layer2',
-        data_format=data_format)
-    inputs = block_layer(
-        inputs=inputs, filters=64, block_fn=building_block, blocks=num_blocks,
-        strides=2, is_training=is_training, name='block_layer3',
-        data_format=data_format)
-
-    inputs = batch_norm_relu(inputs, is_training, data_format)
-    inputs = tf.layers.average_pooling2d(
-        inputs=inputs, pool_size=8, strides=1, padding='VALID',
-        data_format=data_format)
-    inputs = tf.identity(inputs, 'final_avg_pool')
-    inputs = tf.reshape(inputs, [-1, 64])
-    inputs = tf.layers.dense(inputs=inputs, units=num_classes)
-    inputs = tf.identity(inputs, 'final_dense')
-    return inputs
-
-  return model
+  res = tf.nn.conv2d_transpose(logits_pl, upsample_filt_pl,
+                        output_shape=[1, new_height, new_width, number_of_classes],
+                        strides=[1, factor, factor, 1])
+   return res
 
 
 def imagenet_resnet_v2_generator(block_fn, layers, num_classes,
@@ -359,14 +313,23 @@ def imagenet_resnet_v2_generator(block_fn, layers, num_classes,
         data_format=data_format)
 
     inputs = batch_norm_relu(inputs, is_training, data_format)
-    inputs = tf.layers.average_pooling2d(
-        inputs=inputs, pool_size=7, strides=1, padding='VALID',
-        data_format=data_format)
-    inputs = tf.identity(inputs, 'final_avg_pool')
-    inputs = tf.reshape(inputs,
-                        [-1, 512 if block_fn is building_block else 2048])
-    inputs = tf.layers.dense(inputs=inputs, units=num_classes)
-    inputs = tf.identity(inputs, 'final_dense')
+
+
+    inputs = upsample_layer(input_img, factor)
+
+    inputs = upsample_layer(input_img, factor)
+
+    inputs = upsample_layer(inputs_img, factor)
+
+
+    # inputs = tf.layers.average_pooling2d(
+    #     inputs=inputs, pool_size=7, strides=1, padding='VALID',
+    #     data_format=data_format)
+    # inputs = tf.identity(inputs, 'final_avg_pool')
+    # inputs = tf.reshape(inputs,
+    #                     [-1, 512 if block_fn is building_block else 2048])
+    # inputs = tf.layers.dense(inputs=inputs, units=num_classes)
+    # inputs = tf.identity(inputs, 'final_dense')
     return inputs
 
   return model
@@ -438,10 +401,13 @@ def main():
 
     # Construct model
     model= imagenet_resnet_v2(RESNET_SIZE, 100, data_format=None)
-    logits= model(x,True)
+    output= model(x,True)
+
+    print(output)
+    assert False
 
     # Define loss and optimizer
-    loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
+    # loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
     train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
     # Evaluate model
@@ -522,51 +488,51 @@ def main():
         print('Evaluation Finished! Accuracy Top1 = ' + "{:.4f}".format(acc1_total) + ", Top5 = " + "{:.4f}".format(acc5_total))
 
 
-def main_test():
+# def main_test():
 
-    # Construct dataloader
-    opt_data_test = {
-        #'data_h5': 'miniplaces_256_train.h5',
-        'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
-        'data_list': '../../data/test.txt', # MODIFY PATH ACCORDINGLY
-        'load_size': load_size,
-        'fine_size': fine_size,
-        'data_mean': data_mean,
-        'randomize': False
-        }
+#     # Construct dataloader
+#     opt_data_test = {
+#         #'data_h5': 'miniplaces_256_train.h5',
+#         'data_root': '../../data/images/',   # MODIFY PATH ACCORDINGLY
+#         'data_list': '../../data/test.txt', # MODIFY PATH ACCORDINGLY
+#         'load_size': load_size,
+#         'fine_size': fine_size,
+#         'data_mean': data_mean,
+#         'randomize': False
+#         }
 
-    loader_test = DataLoaderDiskTest(is_train=False, **opt_data_test)
+#     loader_test = DataLoaderDiskTest(is_train=False, **opt_data_test)
 
-    # tf Graph input
-    x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
-    keep_dropout = tf.placeholder(tf.float32)
-    train_phase = tf.placeholder(tf.bool)
-    # Construct model
-    model= imagenet_resnet_v2(RESNET_SIZE, 100, data_format=None)
-    logits= model(x,True)
-    _, top5_preds = tf.nn.top_k(logits, 5)
-    # define initialization
-    init = tf.global_variables_initializer()
-    # define saver
-    saver = tf.train.Saver()
-    # Launch the graph
-    out_preds = []
-    num_batch = loader_test.size()//batch_size
-    with tf.Session() as sess:
-        # Initialization
-        saver.restore(sess, start_from)
-        # Evaluate on the whole validation set
-        loader_test.reset()
-        for i in range(num_batch):
-            images_batch = loader_test.next_batch(batch_size)    
-            top5s = sess.run([top5_preds], feed_dict={x: images_batch, keep_dropout: 1., train_phase: False})[0]
-            out_preds += top5s.tolist()
+#     # tf Graph input
+#     x = tf.placeholder(tf.float32, [None, fine_size, fine_size, c])
+#     keep_dropout = tf.placeholder(tf.float32)
+#     train_phase = tf.placeholder(tf.bool)
+#     # Construct model
+#     model= imagenet_resnet_v2(RESNET_SIZE, 100, data_format=None)
+#     logits= model(x,True)
+#     _, top5_preds = tf.nn.top_k(logits, 5)
+#     # define initialization
+#     init = tf.global_variables_initializer()
+#     # define saver
+#     saver = tf.train.Saver()
+#     # Launch the graph
+#     out_preds = []
+#     num_batch = loader_test.size()//batch_size
+#     with tf.Session() as sess:
+#         # Initialization
+#         saver.restore(sess, start_from)
+#         # Evaluate on the whole validation set
+#         loader_test.reset()
+#         for i in range(num_batch):
+#             images_batch = loader_test.next_batch(batch_size)    
+#             top5s = sess.run([top5_preds], feed_dict={x: images_batch, keep_dropout: 1., train_phase: False})[0]
+#             out_preds += top5s.tolist()
 
-    for i in range(10000):
-        num_str = str(i+1)
-        while len(num_str) < 8: num_str = '0' + num_str
-        preds_str = ' '.join([str(elem) for elem in out_preds[i]])
-        print('test/' + num_str + '.jpg ' + preds_str)
+#     for i in range(10000):
+#         num_str = str(i+1)
+#         while len(num_str) < 8: num_str = '0' + num_str
+#         preds_str = ' '.join([str(elem) for elem in out_preds[i]])
+#         print('test/' + num_str + '.jpg ' + preds_str)
 
 if __name__ == '__main__':
     RESNET_SIZE = 18 # 34
