@@ -403,16 +403,15 @@ def main():
     model= imagenet_resnet_v2(RESNET_SIZE, 100, data_format=None)
     output= model(x,True)
 
-    print(output)
-    assert False
+    #print(output)
 
     # Define loss and optimizer
-    # loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
-    train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+    #loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y, logits=logits))
+    #train_optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
     # Evaluate model
-    accuracy1 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 1), tf.float32))
-    accuracy5 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 5), tf.float32))
+    #accuracy1 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 1), tf.float32))
+    #accuracy5 = tf.reduce_mean(tf.cast(tf.nn.in_top_k(logits, y, 5), tf.float32))
 
     # define initialization
     init = tf.global_variables_initializer()
@@ -441,7 +440,8 @@ def main():
                 print('[%s]:' %(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
 
                 # Calculate batch loss and accuracy on training set
-                l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False}) 
+                #l, acc1, acc5 = sess.run([loss, accuracy1, accuracy5], feed_dict={x: images_batch, y: labels_batch, keep_dropout: 1., train_phase: False}) 
+                out1 = sess.run([output], feed_dict={x:images_batch, y:labels_batch, keep_dropout: 1., train_phase:False}
                 print("-Iter " + str(step) + ", Training Loss= " + \
                       "{:.6f}".format(l) + ", Accuracy Top1 = " + \
                       "{:.4f}".format(acc1) + ", Top5 = " + \
@@ -544,8 +544,8 @@ if __name__ == '__main__':
         training_iters = 1501
         step_display = 50
         step_save = 1500
-        path_save = 'model_resnet-decrease-lr-more-iterations-data_aug_v4_final'
-        start_from ='model_resnet-increased-dropout-3000'
+        path_save = 'model_color_v1'
+        start_from =''
 
         main()
 
